@@ -166,12 +166,12 @@ Run the program and record the list contents printed after each labeled step:
 | Step | List contents (data values in order) |
 |---|---|
 | Initial | |
-| After insert 30 at front | |
-| After insert 10 at front | |
-| After insert 20 after 10 | |
-| After insert 40 after 30 | |
-| After removing 20 (after head) | |
-| After removing head (10) | |
+| After insert 30 at front | [30@00000214BCD04B20] |
+| After insert 10 at front | [10@00000214BCD04C40][30@00000214BCD04B20] |
+| After insert 20 after 10 | [10@00000214BCD04C40][20@00000214BCD04C60][30@00000214BCD04B20] |
+| After insert 40 after 30 | [10@00000214BCD04C40][20@00000214BCD04C60][30@00000214BCD04B20][40@00000214BCD04CA0] |
+| After removing 20 (after head) | [10@00000214BCD04C40][30@00000214BCD04B20][40@00000214BCD04CA0] |
+| After removing head (10) | [30@00000214BCD04B20][40@00000214BCD04CA0] |
 
 ---
 
@@ -179,7 +179,7 @@ Run the program and record the list contents printed after each labeled step:
 
 **Q1.** Every `new Node(val)` call allocates memory on the heap. Every `delete` call frees it. What would happen to a program that builds a large linked list, removes all nodes using `removeAfter`, but forgets to call `delete` on the removed nodes?
 
-> Your answer:
+> Your answer: This would remove access to the data held by the node, but not the data itself, which if enough additions and incomplete deletions occur, could cause a memory leak due to a continuous increase in unreachable data in memory.
 
 ---
 
@@ -334,32 +334,32 @@ int main() {
 ### Observation Table 2a — Insert at Front (μs)
 
 | n | Linked `pushFront` | Vector `insert(begin)` |
-|---|---|---|
-| 1,000 | | |
-| 5,000 | | |
-| 10,000 | | |
-| 50,000 | | |
-| 100,000 | | |
+--------------------------------------------------
+      1000                69.6               208.7
+      5000               523.9              1987.2
+     10000              1241.9              5181.2
+     50000              5156.1            126863.4
+    100000              8000.1            462627.1
 
 ### Observation Table 2b — Insert at Back (μs)
 
 | n | Linked (walk to end) | Vector `push_back` |
-|---|---|---|
-| 1,000 | | |
-| 5,000 | | |
-| 10,000 | | |
-| 50,000 | | |
-| 100,000 | | |
+----------------------------------------------------
+      1000                1150.9                33.7
+      5000               49398.9               107.8
+     10000              167604.0               219.6
+     50000             4431405.7              1012.6
+    100000            18100640.8              1993.1
 
 ### Observation Table 2c — Access by Index (ns, single access at n/2)
 
 | n | Linked `getAt(n/2)` | Vector `v[n/2]` |
-|---|---|---|
-| 1,000 | | |
-| 5,000 | | |
-| 10,000 | | |
-| 50,000 | | |
-| 100,000 | | |
+------------------------------------------------------
+      1000               772.460                 3.020
+      5000              9857.260                 3.004
+     10000             17462.420                 3.526
+     50000            104707.800                 6.927
+    100000            214801.900                 3.013
 
 ---
 
@@ -367,23 +367,23 @@ int main() {
 
 **Q2.** In Table 2a, how does linked list `pushFront` time change as n grows from 1,000 to 100,000 (100×)? How does vector `insert(begin)` time change? Which operation's growth rate matches O(1) and which matches O(n)?
 
-> Your answer:
+> Your answer: Linked list push front has a time change growth rate that can be expressed as 2t as n doubles, where vector insert begin is growing somewhere around 3t as n doubles. Linked list is not exactly constant time complexity, but closer than vector insert which is clearly growing significantly as n increases.
 
 **Q3.** In Table 2b, the linked list version walks to the end of the list before each insertion, making it O(n²) total. When n grows from 1,000 to 10,000 (10×), by approximately what factor does the linked list time increase? Does this match O(n²)?
 
-> Your answer:
+> Your answer: The factor by which time increases is just under 23 times. This isn't perfectly n^2 mathematically but figures into big O scales for O(n^2).
 
 **Q4.** In Table 2c, the vector access time should be nearly the same for all values of n. The linked list access time grows with n. At n = 100,000 accessing the middle element, roughly how many times slower is the linked list than the vector? What does this tell you about why `std::vector` is preferred for random-access workloads?
 
-> Your answer:
+> Your answer: Linked list is approx 71,600 times slower accessing the middle element with an n=100,000. For a list with low mutation but high ongoing random access of elements, harnessing vector's ordering by index makes sense.
 
 **Q5.** The linked list in Table 2b is slow because it has no tail pointer — it walks the whole list on every back-insertion. If you added a `tail` pointer (as in `std::list`), back insertion would be O(1). Would that make the linked list competitive with `vector::push_back` for building a list from scratch? What other factor still disadvantages the linked list?
 
-> Your answer:
+> Your answer: Vector, being an array, has every element stored contiguously in memory. A linked list still must allocate pointers to new nodes and these are stored at addresses throughout memory, so the array will edge out the linked list in terms of speed when adding elements to the end of a list.
 
 **Q6.** Based on Tables 2a, 2b, and 2c together, describe a real application or data structure where a linked list would be clearly the better choice over a vector, and justify your answer using the specific operation costs you observed.
 
-> Your answer:
+> Your answer: There are a couple of areas where linked lists shine in terms of efficiency and flexibility. The first is insertion of new elements at locations other than the end of the list; pointer updating is fast and relatively simple. The second is the capability to store various data types together in one containter. Arrays by contrast have to be composed of the same data-type. So a dictionary data-structure containing integers and strings at each node which will be updated with new nodes, perhaps alphabetically based on keys, on an ongoing basis should be a linked list.
 
 ---
 
@@ -542,7 +542,7 @@ Record the first 8 node addresses and their gaps from the program output:
 
 **Q8.** In Table 3b, both the vector and the linked list perform the same total number of additions (n additions). Yet the linked list is significantly slower. The work is identical — why is the time different? What is the CPU doing between each addition in the linked list case that it doesn't have to do for the vector?
 
-> Your answer:
+> Your answer: Caching values from a contiguous block of memory is simpler than accessing random location throughout memory, or 'pointer chasing', and though the arithmetic operations are O(1), the process of reading a pointer and waiting to cache the value adds to the overall time it takes the linked list to perform the additions.
 
 **Q9.** Look at Table 3c. A doubly-linked node stores one extra pointer compared to a singly-linked node. How many extra bytes does that add per node? For 10,000 nodes, how many extra bytes total does that cost? Is this a meaningful difference in practice?
 
@@ -550,7 +550,7 @@ Record the first 8 node addresses and their gaps from the program output:
 
 **Q10.** The traversal slowdown in Table 3b is consistently larger than 1× — linked list traversal is slower than vector traversal even though both do O(n) work with the same loop structure. As n grows from 1,000 to 10,000, does the slowdown factor stay roughly constant, grow, or shrink? What does the trend suggest about how cache effects scale with list size?
 
-> Your answer:
+> Your answer: The cache-effects scale because as n grows, the number of pointer-chasing operations grows, pushing the time complexity up for the linked list. This is something like having your next assignment somewhere on your desk, versus looking for your next assignment on your desk but realizing it's in the basement and having to go get it, every time you move on to the next assignment. Eventually these trips will scale to a larger time loss than opening a desk drawer each time.
 
 ----
 
