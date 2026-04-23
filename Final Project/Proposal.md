@@ -11,8 +11,8 @@ The project will employ both array and linked-list based data structures and com
 Finally, a rough road-map of the coming weeks:
 
 ## Week 1:
-•	Project setup + particle structure design 
-•	Basic array-based particle system working 
+-	Project setup + particle structure design 
+-	Basic array-based particle system working 
 
 ## Week 2:
 -	Implement linked list version 
