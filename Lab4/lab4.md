@@ -285,15 +285,15 @@ Record the final RESULT printed for each input string:
 
 **Q6.** For input `({[}])` the program reports INVALID. At which character does it fail, and what exactly is wrong? Why is a queue not a useful data structure for bracket matching — what ordering property of the stack makes the matching work correctly?
 
-> Your answer:
+> Your answer: The top bracket does not match the first closing bracket. Queue is first in first out, which would cause the outer bracket to be popped rather than the opposite of the compared closing bracket
 
 **Q7.** The input `hello(world[!])` contains letters, `!`, and brackets mixed together. The program still reports VALID. What does the program do with non-bracket characters? Why is it correct to ignore them?
 
-> Your answer:
+> Your answer: The program skips them because they do not affect the nesting or pairing of brackets.
 
 **Q8.** The empty string input reports VALID. Is this the right answer? Justify why an empty string is considered balanced.
 
-> Your answer:
+> Your answer: I supposed it could be argued it's balanced because although there are no elements, there is also no asymmetry. The code also declares this state to be valid, maybe for this reason on lines 244-245.
 
 ---
 
@@ -433,19 +433,19 @@ Record front-to-back contents and dequeue return values:
 | Operation | Queue contents (front → back) | Dequeue returned |
 |---|---|---|
 | Initial | *(empty)* | — |
-| enqueue(10) | | — |
-| enqueue(20) | | — |
-| enqueue(30) | | — |
-| dequeue | | |
-| enqueue(40) | | — |
-| dequeue | | |
-| dequeue | | |
-| enqueue(50) | | — |
-| enqueue(60) | | — |
-| enqueue(70) | | — |
-| dequeue | | |
-| dequeue | | |
-| dequeue | | |
+| enqueue(10) 10| | — |
+| enqueue(20) 10,20| | — |
+| enqueue(30) 10,20,30| | — |
+| dequeue | 20,30| |
+| enqueue(40) 20,30,40| | — |
+| dequeue 30,40| | |
+| dequeue 40| | |
+| enqueue(50) 40,50| | — |
+| enqueue(60) 40,50,60| | — |
+| enqueue(70) 40,50,60,70| | — |
+| dequeue 50,60,70| | |
+| dequeue 60,70| | |
+| dequeue 60| | |
 | dequeue | | |
 
 ### Observation Table 3b — Circular Array Internal State
@@ -455,20 +455,20 @@ Record the `front` index, `back` index, and `cnt` printed for the array queue af
 | Operation | `front` index | `back` index | `cnt` |
 |---|---|---|---|
 | Initial | 0 | 0 | 0 |
-| enqueue(10) | | | |
-| enqueue(20) | | | |
-| enqueue(30) | | | |
-| dequeue | | | |
-| enqueue(40) | | | |
-| dequeue | | | |
-| dequeue | | | |
-| enqueue(50) | | | |
-| enqueue(60) | | | |
-| enqueue(70) | | | |
-| dequeue | | | |
-| dequeue | | | |
-| dequeue | | | |
-| dequeue | | | |
+| enqueue(10) | 0| 1| 1|
+| enqueue(20) | 0| 2| 2|
+| enqueue(30) | 0| 3| 3|
+| dequeue | 1| 3| 2|
+| enqueue(40) | 1| 4| 3|
+| dequeue | 2| 4| 2|
+| dequeue | 3| 4| 1|
+| enqueue(50) | 3| 5| 2|
+| enqueue(60) | 3| 6| 3|
+| enqueue(70) | 3| 7| 4|
+| dequeue | 4| 7| 3|
+| dequeue | 5| 7| 2|
+| dequeue | 6| 7| 1|
+| dequeue | 7| 7| 0|
 
 ---
 
@@ -476,15 +476,15 @@ Record the `front` index, `back` index, and `cnt` printed for the array queue af
 
 **Q9.** Look at Table 3a. After every operation, do the linked queue and array queue always contain the same elements in the same order? What does this confirm about the two implementations?
 
-> Your answer:
+> Your answer: They have the same elements in the same order, confirming that an employing an ADT does not require direct knowledge of the implementation (this can become necessary for optimization in terms of applying data structures to specific situations, but not necessarily for the practical function of the ADT itself)
 
-**Q10.** Look at Table 3b. After the three initial enqueues and one dequeue, the `front` index is 1 (not 0). The element at array index 0 is logically gone — but the dequeue operation never moved any data. What did it do instead? What does this tell you about how "removal" works in a circular array queue?
+**Q10.** Look at Table 3b. After the three initial enqueues and one dequeue, the `front` index is 1 (not 0). The element at array index 0 is logically gone — but the dequeue operation never moved any data. What did it do instead? What does this tell you about how "removal" works in a circular array queue? 
 
-> Your answer:
+> Your answer: To keep operations O(n), there is no element shifting as you might find in a common array set up as a list. Instead, the index of top is just moved up, and a modulo formula is used to keep track of this movement and to reuse abandoned indices.
 
 **Q11.** The circular array queue has a `cnt` field tracking the number of elements. An alternative design uses only `front` and `back` indices and considers the queue empty when `front == back`. What ambiguity arises in that design? Why is the `cnt` field (or an `isFull` flag) needed?
 
-> Your answer:
+> Your answer: One other situation in which front and back could converge is when the array is full. To remove ambiguity and simplify coding instructions, a count field is a good solution.
 
 ---
 
@@ -604,20 +604,20 @@ int main() {
 ### Observation Table 4a — Stack Performance (μs)
 
 | n | Linked push+pop | Vector push+pop | Ratio |
-|---|---|---|---|
-| 100,000 | | | |
-| 500,000 | | | |
-| 1,000,000 | | | |
-| 5,000,000 | | | |
+----------------------------------------------------------------------
+    100000                  9770                  3517           2.78x
+    500000                 39513                 16144           2.45x
+   1000000                 82134                 30358           2.71x
+   5000000                487217                182581           2.67x
 
 ### Observation Table 4b — Queue Performance (μs)
 
 | n | Linked enq+deq | Array enq+deq | Ratio |
-|---|---|---|---|
-| 100,000 | | | |
-| 500,000 | | | |
-| 1,000,000 | | | |
-| 5,000,000 | | | |
+--------------------------------------------------------------------------
+    100000                   15670                   10312           1.52x
+    500000                  118115                   23318           5.07x
+   1000000                  133698                   25193           5.31x
+   5000000                  453495                   78494           5.78x
 
 ---
 
@@ -625,19 +625,19 @@ int main() {
 
 **Q12.** Both linked and array implementations are O(1) per operation, so doubling n should double total time for both. When n grows from 100,000 to 5,000,000 (50×), by approximately what factor does each implementation's time grow? Is this consistent with O(n) total work?
 
-> Your answer:
+> Your answer: The linked list implentation grows by a factor of 49, and the array implementation grows by a factor of 51, which is consistent with O(n). Although each individual operation is O(1), we are performing it n times, so in practice we get n*0(1) = O(n).
 
 **Q13.** The array/vector implementation is faster than the linked implementation by a consistent ratio. Both do the same logical work. What accounts for the difference? Name at least one concrete reason.
 
-> Your answer:
+> Your answer: The array is able to use cache memory, where the linked list results in a cache miss each time, and has to locate a space in memory via a pointer with each call. As N increases, the linked list lags behind the array implementation.
 
 **Q14.** The vector stack calls `reserve(n)` before pushing. Remove the `reserve` call mentally and predict whether the timing would change significantly. What does `reserve` prevent, and what cost does it avoid?
 
-> Your answer:
+> Your answer: this function call reserves or allocates a size to the array equal to n, preventing the array from having to possibly go though many resize operations. Instead, the array is presized to the size of the input. This makes the array implementation a true O(1) time complexity, rather than amortized.
 
 **Q15.** Based on your observations across all four models, state a concrete rule for when you would prefer a linked-list implementation of a stack or queue over an array-based one. Your rule should reference at least one specific situation where the linked implementation's properties are genuinely advantageous.
 
-> Your answer:
+> Your answer: If I can't increase the size of the array, and the size of the stack is unknown, a linked list offers greater flexibility for this use case. In an instance where speed is paramount, the consistent use of cache memory by the array implementation would be superior. One other possible consideration might be the type of elements being stored. If these aren't all the same, a simple array can't be used, which requires regular data-layout for the contiguous memory use and addressing that makes arrays so efficient. For a stack made up of mixed data types, the linked list would be the necessary choice (as far as I undersand this, there may be workarounds I'm not familiar with)
 
 ---
 
