@@ -1,5 +1,42 @@
 import random
 import time
+import numpy as np
+
+# ---------------------------
+# Particle System Class Numpy-based
+# ---------------------------
+class ParticleSystemNumPy:
+    def __init__(self):
+        self.x = np.array([], dtype=np.float32)
+        self.y = np.array([], dtype=np.float32)
+        self.vx = np.array([], dtype=np.float32)
+        self.vy = np.array([], dtype=np.float32)
+        self.life = np.array([], dtype=np.int32)
+
+    def spawn(self, n):
+        self.x = np.append(self.x, np.random.random(n))
+        self.y = np.append(self.y, np.random.random(n))
+        self.vx = np.append(self.vx, np.random.uniform(-1, 1, n))
+        self.vy = np.append(self.vy, np.random.uniform(-1, 1, n))
+        self.life = np.append(self.life, np.random.randint(50, 100, n))
+
+    def update(self):
+        # VECTOR UPDATE 
+        self.x += self.vx
+        self.y += self.vy
+        self.life -= 1
+
+        # VECTOR DELETE 
+        alive_mask = self.life > 0
+
+        self.x = self.x[alive_mask]
+        self.y = self.y[alive_mask]
+        self.vx = self.vx[alive_mask]
+        self.vy = self.vy[alive_mask]
+        self.life = self.life[alive_mask]
+
+    def count(self):
+        return len(self.life)
 
 # ---------------------------
 # Particle Class Definition
@@ -121,15 +158,18 @@ class ParticleSystem:
 
 
 # ---------------------------
-# Simple Benchmark Run (Array vs Linked List)
+# Simple Benchmark Run (Legacy System)
 # ---------------------------
-print("Spawning particles...")
+'''N = 500000
+print("Spawning " + str(N) + " particles...")
 
 ps_array = ParticleSystem()
 ps_ll = ParticleSystemLinkedList()
+ps_np = ParticleSystemNumPy()
 
-ps_array.spawn(100000)
-ps_ll.spawn(100000)
+ps_array.spawn(N)
+ps_ll.spawn(N)
+ps_np.spawn(N)
 
 # ---------------- ARRAY ----------------
 print("\nArray system updating...")
@@ -154,3 +194,58 @@ end = time.perf_counter()
 
 print(f"Linked list time: {end - start:.6f} seconds")
 print(f"Linked list remaining: {ps_ll.count()}")
+
+# ---------------- NUMPY ----------------
+print("\nNumPy system updating...")
+start = time.perf_counter()
+
+for _ in range(60):
+    ps_np.update()
+
+end = time.perf_counter()
+
+print(f"NumPy time: {end - start:.6f} seconds")
+print(f"NumPy remaining: {ps_np.count()}")'''
+
+# ---------------------------
+# Formal Benchmark System V.1
+# ---------------------------
+
+def benchmark_system(system_class, name, N, steps=60):
+    system = system_class()   
+    system.spawn(N)
+
+    start = time.perf_counter()
+
+    for _ in range(steps):
+        system.update()
+
+    end = time.perf_counter()
+
+    return {
+        "name": name,
+        "N": N,
+        "time": end - start,
+        "remaining": system.count() if hasattr(system, "count") else len(system.particles)
+    }
+#-----APPLY BENCHMARKS------    
+sizes = [10000, 100000, 500000]
+
+results = []
+
+for N in sizes:
+    print(f"\n--- Benchmarking N = {N} ---")
+
+    results.append(benchmark_system(ParticleSystem, "Array", N))
+    results.append(benchmark_system(ParticleSystemLinkedList, "LinkedList", N))
+    results.append(benchmark_system(ParticleSystemNumPy, "NumPy", N))
+    
+#----OUTPUT TABLE---------
+
+print("\nResults:")
+print(f"{'System':<12} {'N':<10} {'Time (s)':<12} {'Remaining'}")
+
+for r in results:
+    print(f"{r['name']:<12} {r['N']:<10} {r['time']:<12.6f} {r['remaining']}")
+    
+    
