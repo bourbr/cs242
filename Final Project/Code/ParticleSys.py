@@ -13,12 +13,21 @@ class ParticleSystemNumPy:
         self.vy = np.array([], dtype=np.float32)
         self.life = np.array([], dtype=np.int32)
 
-    def spawn(self, n):
+    '''def spawn(self, n):
         self.x = np.append(self.x, np.random.random(n))
         self.y = np.append(self.y, np.random.random(n))
         self.vx = np.append(self.vx, np.random.uniform(-1, 1, n))
         self.vy = np.append(self.vy, np.random.uniform(-1, 1, n))
-        self.life = np.append(self.life, np.random.randint(50, 100, n))
+        self.life = np.append(self.life, np.random.randint(50, 100, n))'''
+    
+    def spawn(self, n):
+        self.x = np.random.random(n).astype(np.float32)
+        self.y = np.random.random(n).astype(np.float32)
+
+        self.vx = np.random.uniform(-1, 1, n).astype(np.float32)
+        self.vy = np.random.uniform(-1, 1, n).astype(np.float32)
+
+        self.life = np.random.randint(50, 100, n).astype(np.int32)
 
     def update(self):
         # VECTOR UPDATE 
@@ -42,32 +51,38 @@ class ParticleSystemNumPy:
 # Particle Class Definition
 # ---------------------------
 class Particle:
+    __slots__ = ('x', 'y', 'vx', 'vy', 'life')
+
     def __init__(self, x, y, vx, vy, life):
         self.x = x
         self.y = y
         self.vx = vx
         self.vy = vy
         self.life = life
-
-    def update(self):
+        
+    def update(self): # Used by Native Python Array-based system
         self.x += self.vx
         self.y += self.vy
         self.life -= 1
+
 # ---------------------------
 # Particle Node Class (Linked List)
 # ---------------------------
 class Node:
+    __slots__ = ('particle', 'next')
+
     def __init__(self, particle):
         self.particle = particle
         self.next = None
+
 # ---------------------------
-# Particle Linked List Class 
+# Particle Linked List Class
 # ---------------------------
 class ParticleLinkedList:
     def __init__(self):
         self.head = None
         self.tail = None
-        self.size = 0      
+        self.size = 0
 
     def append(self, particle):
         new_node = Node(particle)
@@ -78,15 +93,18 @@ class ParticleLinkedList:
             self.tail.next = new_node
             self.tail = new_node
 
-        self.size += 1     
-    
+        self.size += 1
+
     def update(self):
         current = self.head
         prev = None
 
         while current:
+
             p = current.particle
-            p.update()   # Particle method
+            p.x += p.vx
+            p.y += p.vy
+            p.life -= 1
 
             if p.life <= 0:
                 if prev:
@@ -127,7 +145,7 @@ class ParticleSystemLinkedList:
         return self.particles.size        
         
 # ---------------------------
-# Particle System Class (Array-based)
+# Particle System Class (Native Python Array-based)
 # ---------------------------
 class ParticleSystem:
     def __init__(self):
@@ -155,7 +173,6 @@ class ParticleSystem:
                 alive_particles.append(p)
 
         self.particles = alive_particles
-
 
 # ---------------------------
 # Simple Benchmark Run (Legacy System)
@@ -214,38 +231,41 @@ print(f"NumPy remaining: {ps_np.count()}")'''
 def benchmark_system(system_class, name, N, steps=60):
     system = system_class()   
     system.spawn(N)
-
+    
     start = time.perf_counter()
 
     for _ in range(steps):
         system.update()
 
     end = time.perf_counter()
+    
+    elapsed_time = end - start # Particle Updates Per Second (PPS)
+    pps = (N * steps) / elapsed_time if elapsed_time > 0 else 0
 
     return {
         "name": name,
         "N": N,
         "time": end - start,
-        "remaining": system.count() if hasattr(system, "count") else len(system.particles)
+        "remaining": system.count() if hasattr(system, "count") else len(system.particles),
+        "pps": pps
     }
 #-----APPLY BENCHMARKS------    
-sizes = [10000, 100000, 500000]
+sizes = [10000, 100000, 500000, 1000000]
 
 results = []
 
 for N in sizes:
     print(f"\n--- Benchmarking N = {N} ---")
 
-    results.append(benchmark_system(ParticleSystem, "Array", N))
+    results.append(benchmark_system(ParticleSystem, "PyArray", N))
     results.append(benchmark_system(ParticleSystemLinkedList, "LinkedList", N))
-    results.append(benchmark_system(ParticleSystemNumPy, "NumPy", N))
+    results.append(benchmark_system(ParticleSystemNumPy, "VectArray", N))
     
 #----OUTPUT TABLE---------
 
 print("\nResults:")
-print(f"{'System':<12} {'N':<10} {'Time (s)':<12} {'Remaining'}")
+print(f"{'System':<12} {'N':<10} {'Time (s)':<12} {'Remaining':<10} {'PPS':<10}")
 
 for r in results:
-    print(f"{r['name']:<12} {r['N']:<10} {r['time']:<12.6f} {r['remaining']}")
-    
-    
+    print(f"{r['name']:<12} {r['N']:<10} {r['time']:<12.6f} {r['remaining']:<10} {r['pps']:<10.2f}")
+

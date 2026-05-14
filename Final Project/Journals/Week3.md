@@ -8,7 +8,7 @@ Each system is now tested using fresh state per run, meaning every benchmark beg
 
 ## 2. Code highlight
 
-```cpp
+```py
 def benchmark_system(system_class, name, N, steps=60):
     system = system_class()   # always fresh instance
     system.spawn(N)

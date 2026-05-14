@@ -16,7 +16,7 @@ The code now allows for direct comparison between the two implementations under 
 
 2. Code Highlight
 
-```cpp
+```py
 def update(self):
     current = self.head
     prev = None
