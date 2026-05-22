@@ -1,6 +1,9 @@
 import random
 import time
 import numpy as np
+import csv
+import pandas as pd
+import matplotlib.pyplot as plt
 
 # ---------------------------
 # Particle System Class Numpy-based
@@ -225,7 +228,7 @@ print(f"NumPy time: {end - start:.6f} seconds")
 print(f"NumPy remaining: {ps_np.count()}")'''
 
 # ---------------------------
-# Formal Benchmark System V.1
+# Formal Benchmark System V.2
 # ---------------------------
 
 def benchmark_system(system_class, name, N, steps=60):
@@ -249,7 +252,24 @@ def benchmark_system(system_class, name, N, steps=60):
         "remaining": system.count() if hasattr(system, "count") else len(system.particles),
         "pps": pps
     }
-#-----APPLY BENCHMARKS------    
+    
+def save_results_csv(results, filename="benchmark_results.csv"):
+    with open(filename, "w", newline="") as f:
+        writer = csv.writer(f)
+
+        writer.writerow(["System", "N", "Time(s)", "Remaining", "PPS"])
+
+        for r in results:
+            writer.writerow([
+                r["name"],
+                r["N"],
+                r["time"],
+                r["remaining"],
+                r["pps"]
+            ])
+            
+#-----APPLY BENCHMARKS------  
+  
 sizes = [10000, 100000, 500000, 1000000]
 
 results = []
@@ -265,7 +285,40 @@ for N in sizes:
 
 print("\nResults:")
 print(f"{'System':<12} {'N':<10} {'Time (s)':<12} {'Remaining':<10} {'PPS':<10}")
+print("-" * 60)
 
-for r in results:
+for i, r in enumerate(results, start=1):
     print(f"{r['name']:<12} {r['N']:<10} {r['time']:<12.6f} {r['remaining']:<10} {r['pps']:<10.2f}")
 
+    if i % 3 == 0:
+        print("-" * 60)
+        
+#------DATA CATALOGUING-----
+
+save_results_csv(results)
+
+#------PLOT RESULTS--------
+
+df = pd.read_csv("benchmark_results.csv")
+
+plt.figure()
+
+systems = df["System"].unique()
+
+for system in systems:
+    subset = df[df["System"] == system]
+
+    plt.plot(
+        subset["N"],
+        subset["PPS"],
+        marker="o",
+        label=system
+    )
+
+plt.xlabel("Number of Particles (N)")
+plt.ylabel("Particle Updates Per Second (PPS)")
+plt.title("Particle System Performance Scaling")
+plt.legend()
+plt.grid(True)
+
+plt.show()
