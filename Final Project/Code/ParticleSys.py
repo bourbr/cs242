@@ -6,6 +6,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ---------------------------
+# Particle Class Definition
+# ---------------------------
+class Particle:
+    __slots__ = ('x', 'y', 'vx', 'vy', 'life')
+
+    def __init__(self, x, y, vx, vy, life):
+        self.x = x
+        self.y = y
+        self.vx = vx
+        self.vy = vy
+        self.life = life
+        
+    def update(self): # Used by Native Python Array-based system
+        self.x += self.vx
+        self.y += self.vy
+        self.life -= 1
+
+# ---------------------------
 # Particle System Class Numpy-based
 # ---------------------------
 class ParticleSystemNumPy:
@@ -15,13 +33,6 @@ class ParticleSystemNumPy:
         self.vx = np.array([], dtype=np.float32)
         self.vy = np.array([], dtype=np.float32)
         self.life = np.array([], dtype=np.int32)
-
-    '''def spawn(self, n):
-        self.x = np.append(self.x, np.random.random(n))
-        self.y = np.append(self.y, np.random.random(n))
-        self.vx = np.append(self.vx, np.random.uniform(-1, 1, n))
-        self.vy = np.append(self.vy, np.random.uniform(-1, 1, n))
-        self.life = np.append(self.life, np.random.randint(50, 100, n))'''
     
     def spawn(self, n):
         self.x = np.random.random(n).astype(np.float32)
@@ -49,24 +60,6 @@ class ParticleSystemNumPy:
 
     def count(self):
         return len(self.life)
-
-# ---------------------------
-# Particle Class Definition
-# ---------------------------
-class Particle:
-    __slots__ = ('x', 'y', 'vx', 'vy', 'life')
-
-    def __init__(self, x, y, vx, vy, life):
-        self.x = x
-        self.y = y
-        self.vx = vx
-        self.vy = vy
-        self.life = life
-        
-    def update(self): # Used by Native Python Array-based system
-        self.x += self.vx
-        self.y += self.vy
-        self.life -= 1
 
 # ---------------------------
 # Particle Node Class (Linked List)
@@ -176,56 +169,6 @@ class ParticleSystem:
                 alive_particles.append(p)
 
         self.particles = alive_particles
-
-# ---------------------------
-# Simple Benchmark Run (Legacy System)
-# ---------------------------
-'''N = 500000
-print("Spawning " + str(N) + " particles...")
-
-ps_array = ParticleSystem()
-ps_ll = ParticleSystemLinkedList()
-ps_np = ParticleSystemNumPy()
-
-ps_array.spawn(N)
-ps_ll.spawn(N)
-ps_np.spawn(N)
-
-# ---------------- ARRAY ----------------
-print("\nArray system updating...")
-start = time.perf_counter()
-
-for _ in range(60):
-    ps_array.update()
-
-end = time.perf_counter()
-
-print(f"Array time: {end - start:.6f} seconds")
-print(f"Array remaining: {len(ps_array.particles)}")
-
-# ---------------- LINKED LIST ----------------
-print("\nLinked list system updating...")
-start = time.perf_counter()
-
-for _ in range(60):
-    ps_ll.update()
-
-end = time.perf_counter()
-
-print(f"Linked list time: {end - start:.6f} seconds")
-print(f"Linked list remaining: {ps_ll.count()}")
-
-# ---------------- NUMPY ----------------
-print("\nNumPy system updating...")
-start = time.perf_counter()
-
-for _ in range(60):
-    ps_np.update()
-
-end = time.perf_counter()
-
-print(f"NumPy time: {end - start:.6f} seconds")
-print(f"NumPy remaining: {ps_np.count()}")'''
 
 # ---------------------------
 # Formal Benchmark System V.2
